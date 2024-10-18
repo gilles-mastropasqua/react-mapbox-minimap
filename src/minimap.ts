@@ -9,14 +9,13 @@ import type {
 export default class Minimap<MapT extends MapInstance>
   implements IControl<MapT>
 {
-  private mapGL!: MapLib<MapT>;
-  private options: MinimapOptions;
+  private mapGL!: MapLib<MapT>; // Mapbox GL instance
+  private options: MinimapOptions; // Minimap configuration options
 
   private container: HTMLDivElement | HTMLElement | null;
   private map: MapT | null;
   private minimap: MapT | null;
   private minimapCanvas: HTMLCanvasElement | HTMLElement | null;
-
   private toggleButton: HTMLAnchorElement | null;
 
   private isCollapsed: boolean;
@@ -39,25 +38,22 @@ export default class Minimap<MapT extends MapInstance>
   constructor(mapgl: MapLib<MapT>, config?: MinimapOptions) {
     this.mapGL = mapgl;
 
-    // Initialize internal state
+    // Initialization of map and minimap elements
     this.map = null;
     this.minimap = null;
     this.container = null;
     this.minimapCanvas = null;
-
     this.toggleButton = null;
 
-    // State flags
+    // State tracking for user interaction
     this.isCollapsed = false;
     this.isDragging = false;
     this.isCursorOverFeature = false;
-
-    // Initialize tracking coordinates
     this.currentPoint = [0, 0];
     this.previousPoint = [0, 0];
     this.trackingRectCoordinates = [[[], [], [], [], []]];
 
-    // Bind methods to instance
+    // Bind event handlers
     this.onLoad = this.load.bind(this);
     this.onToggle = this.toggle.bind(this);
     this.onMainMapMove = this.update.bind(this);
@@ -66,7 +62,7 @@ export default class Minimap<MapT extends MapInstance>
     this.onMouseDown = this.mouseDown.bind(this);
     this.onMouseUp = this.mouseUp.bind(this);
 
-    // Default options for the minimap
+    // Default minimap options, overridden by config if provided
     this.options = {
       id: "mapgl-minimap",
       width: "320px",
@@ -78,66 +74,69 @@ export default class Minimap<MapT extends MapInstance>
       },
       center: [0, 0],
       zoomLevelOffset: -3,
-      lineColor: "#136a7e", // Color of the tracking rectangle border
-      lineWidth: 1, // Thickness of the tracking rectangle border
-      lineOpacity: 1, // Opacity of the tracking rectangle border
-      fillColor: "#d77a34", // Fill color for the tracking rectangle
-      fillOpacity: 0.25, // Opacity of the fill color
-      toggleDisplay: false, // Option to enable the collapse/expand button
-      dragPan: false, // Disable drag panning on the minimap
-      scrollZoom: false, // Disable scroll zoom on the minimap
-      boxZoom: false, // Disable box zoom on the minimap
-      dragRotate: false, // Disable drag rotate on the minimap
-      keyboard: false, // Disable keyboard controls on the minimap
-      doubleClickZoom: false, // Disable double-click zoom on the minimap
-      touchZoomRotate: false, // Disable touch controls on the minimap
-      disableMinimapMoveOnDrag: false, // Allow minimap move when dragging
-      enableResize: false, // Option to allow resizing of the minimap
-      enableMove: false, // Option to allow moving the minimap
+      lineColor: "#136a7e",
+      lineWidth: 1,
+      lineOpacity: 1,
+      fillColor: "#d77a34",
+      fillOpacity: 0.25,
+      toggleDisplay: false, // Option to show/hide the minimap
+      dragPan: false, // Disable drag pan on the minimap
+      scrollZoom: false, // Disable zooming with scroll on minimap
+      boxZoom: false, // Disable box zoom on minimap
+      dragRotate: false, // Disable map rotation by dragging
+      keyboard: false, // Disable keyboard interaction
+      doubleClickZoom: false, // Disable double-click zoom
+      touchZoomRotate: false, // Disable zoom/rotate gestures
+      disableMinimapMoveOnDrag: false, // Allow main map to move when dragging minimap rectangle
+      enableResize: false, // Enable resizing the minimap container
+      enableMove: false, // Enable moving the minimap
     };
 
-    // Merge custom configuration with defaults
     if (config) {
       Object.assign(this.options, config);
     }
   }
 
-  // Enable resizing of the minimap if the option is active
+  // Enables resizing if the option is activated
   private enableResize(): void {
     if (!this.container || !this.options.enableResize) return;
 
-    // Setup resizable container
+    // Set container resizable and define minimum size
     Object.assign(this.container!.style, {
       resize: "both",
       overflow: "hidden",
-      // minWidth: "150px",
-      // minHeight: "100px",
+      minWidth: "150px",
+      minHeight: "100px",
     });
 
     const minimapContainer = this.minimap?.getContainer();
 
+    // Resize handler for the minimap
     const handleResize = () => {
       if (this.minimap) {
-        (this.minimap as any).resize(); // Resize the minimap during container resize
+        (this.minimap as any).resize(); // Real-time resizing
       }
     };
 
+    // Disable transition effects and start resizing
     const onMouseDown = () => {
       if (minimapContainer) {
-        minimapContainer.style.transition = "none"; // Disable transitions during resizing
+        minimapContainer.style.transition = "none"; // Disable transitions during resize
       }
       window.addEventListener("mousemove", handleResize);
     };
 
+    // Stop resizing on mouse release
     const onMouseUp = () => {
       window.removeEventListener("mousemove", handleResize);
     };
 
+    // Add event listeners for resizing
     this.container!.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mouseup", onMouseUp, { once: true });
   }
 
-  // Enable moving of the minimap if the option is active
+  // Enables moving the minimap if the option is activated
   private enableMove(): void {
     if (!this.container || !this.options.enableMove) return;
 
@@ -147,6 +146,7 @@ export default class Minimap<MapT extends MapInstance>
     let initialLeft = 0;
     let initialTop = 0;
 
+    // Move handler during dragging
     const onMouseMove = (e: MouseEvent) => {
       if (isDragging) {
         const newLeft = initialLeft + (e.clientX - startX);
@@ -157,12 +157,14 @@ export default class Minimap<MapT extends MapInstance>
       }
     };
 
+    // Stop moving when mouse is released
     const onMouseUp = () => {
       isDragging = false;
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
 
+    // Start moving on mouse down
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
       startX = e.clientX;
@@ -174,9 +176,10 @@ export default class Minimap<MapT extends MapInstance>
       window.addEventListener("mouseup", onMouseUp);
     };
 
-    // Create a move handle for dragging the minimap
+    // Create move handle element for the minimap
     const moveHandle = document.createElement("div");
 
+    // Apply basic styles to the move handle
     Object.assign(moveHandle.style, {
       width: "24px",
       height: "24px",
@@ -191,27 +194,30 @@ export default class Minimap<MapT extends MapInstance>
       justifyContent: "center",
     });
 
+    // Insert SVG for visual handle
     moveHandle.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="4" cy="4" r="1"></circle>
-        <circle cx="12" cy="4" r="1"></circle>
-        <circle cx="20" cy="4" r="1"></circle>
-        <circle cx="4" cy="12" r="1"></circle>
-        <circle cx="12" cy="12" r="1"></circle>
-        <circle cx="20" cy="12" r="1"></circle>
-        <circle cx="4" cy="20" r="1"></circle>
-        <circle cx="12" cy="20" r="1"></circle>
-        <circle cx="20" cy="20" r="1"></circle>
-      </svg>
-    `;
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="4" cy="4" r="1"></circle>
+    <circle cx="12" cy="4" r="1"></circle>
+    <circle cx="20" cy="4" r="1"></circle>
+    <circle cx="4" cy="12" r="1"></circle>
+    <circle cx="12" cy="12" r="1"></circle>
+    <circle cx="20" cy="12" r="1"></circle>
+    <circle cx="4" cy="20" r="1"></circle>
+    <circle cx="12" cy="20" r="1"></circle>
+    <circle cx="20" cy="20" r="1"></circle>
+  </svg>
+`;
 
     moveHandle.addEventListener("mousedown", (e) =>
       onMouseDown(e as MouseEvent)
     );
+
+    // Append the move handle to the minimap
     this.container!.appendChild(moveHandle);
   }
 
-  // Add the minimap to the main map
+  // Called when adding the minimap control to the main map
   onAdd(map: MapT): HTMLElement {
     this.map = map;
     this.container = this.createContainer(map);
@@ -225,29 +231,34 @@ export default class Minimap<MapT extends MapInstance>
       trackResize: false,
     }));
 
-    this.zoomAdjust();
+    this.zoomAdjust(); // Adjust zoom level based on main map
 
     if (opts.maxBounds) minimap.setMaxBounds(opts.maxBounds);
-    minimap.getCanvas().removeAttribute("tabindex");
 
+    minimap.getCanvas().removeAttribute("tabindex");
     minimap.on("load", this.onLoad);
-    this.enableResize();
-    this.enableMove();
-    this.enableToggle();
+
+    this.enableResize(); // Enable resizing functionality if applicable
+    this.enableMove(); // Enable moving functionality if applicable
+    this.enableToggle(); // Enable minimap toggle button if applicable
 
     return this.container;
   }
 
-  // Remove the minimap and clean up event listeners
+  // Called when removing the minimap control
   onRemove(): void {
     if (this.map) this.map.off("move", this.onMainMapMove);
     if (this.minimap) {
       this.minimap.off("mousemove", this.onMouseMove);
       this.minimap.off("mousedown", this.onMouseDown);
       this.minimap.off("mouseup", this.onMouseUp);
+      this.minimap.off("touchmove", this.onMouseMove);
+      this.minimap.off("touchstart", this.onMouseDown);
+      this.minimap.off("touchend", this.onMouseUp);
     }
     if (this.minimapCanvas) {
       this.minimapCanvas.removeEventListener("wheel", this.preventDefault);
+      this.minimapCanvas.removeEventListener("mousewheel", this.preventDefault);
     }
     if (this.toggleButton) {
       this.toggleButton.removeEventListener("click", this.preventDefault);
@@ -255,14 +266,15 @@ export default class Minimap<MapT extends MapInstance>
     }
     if (this.container) {
       this.container.removeEventListener("contextmenu", this.preventDefault);
+      if (this.toggleButton) this.container.removeChild(this.toggleButton);
       const parentNode = this.container.parentNode;
       if (parentNode) parentNode.removeChild(this.container);
     }
     this.minimap = null;
   }
 
-  // Handle map loading event, initialize the tracking rectangle
   private load(): void {
+    // Initial load of the minimap, sets up interaction settings and adds tracking rectangle
     const opts: any = this.options;
     const map: any = this.map;
     const minimap: any = this.minimap;
@@ -277,21 +289,24 @@ export default class Minimap<MapT extends MapInstance>
       "touchZoomRotate",
     ];
 
-    // Disable unwanted interactions based on options
+    // Disable interactions based on options
     for (const interaction of interactions) {
       if (!opts[interaction]) {
         minimap[interaction].disable();
       }
     }
 
-    // Remove existing trackingRect layers and sources
-    if (minimap.getLayer("trackingRectOutline"))
+    // Setup tracking rectangle on the minimap
+    if (minimap.getLayer("trackingRectOutline")) {
       minimap.removeLayer("trackingRectOutline");
-    if (minimap.getLayer("trackingRectFill"))
+    }
+    if (minimap.getLayer("trackingRectFill")) {
       minimap.removeLayer("trackingRectFill");
-    if (minimap.getSource("trackingRect")) minimap.removeSource("trackingRect");
+    }
+    if (minimap.getSource("trackingRect")) {
+      minimap.removeSource("trackingRect");
+    }
 
-    // Add new tracking rectangle layers and sources
     minimap.addSource("trackingRect", {
       type: "geojson",
       data: {
@@ -330,21 +345,23 @@ export default class Minimap<MapT extends MapInstance>
     this.trackingRect = minimap.getSource("trackingRect");
     this.update();
 
-    // Sync minimap with main map movements
+    // Bind main map and minimap events for movement and interaction
     map.on("move", this.onMainMapMove);
     map.on("moveend", this.onMainMapMoveEnd);
-
     minimap.on("mousemove", this.onMouseMove);
     minimap.on("mousedown", this.onMouseDown);
     minimap.on("mouseup", this.onMouseUp);
+    minimap.on("touchmove", this.onMouseMove);
+    minimap.on("touchstart", this.onMouseDown);
+    minimap.on("touchend", this.onMouseUp);
 
+    // Prevent default scroll and zoom behavior on minimap
     this.minimapCanvas = minimap.getCanvasContainer();
-    if (this.minimapCanvas) {
-      this.minimapCanvas.addEventListener("wheel", this.preventDefault);
-    }
+    if (!this.minimapCanvas) return;
+    this.minimapCanvas.addEventListener("wheel", this.preventDefault);
+    this.minimapCanvas.addEventListener("mousewheel", this.preventDefault);
   }
 
-  // Mouse interaction for dragging the tracking rectangle
   private mouseDown(e: MapMouseEvent<MapT>): void {
     if (this.isCursorOverFeature) {
       this.isDragging = true;
@@ -357,35 +374,42 @@ export default class Minimap<MapT extends MapInstance>
     !this.isCollapsed ? this.collapse() : this.expand();
   }
 
-  // Collapse the minimap to a smaller size
   private collapse(): void {
     if (!this.container || !this.toggleButton) return;
+
     const opts = this.options;
+
     if (opts.toggleDisplay) {
       this.container.style.width = "24px";
       this.container.style.height = "24px";
       this.container.style.resize = "none";
+      this.container.style.minHeight = "24px";
+      this.container.style.minWidth = "24px";
       this.toggleButton.innerHTML =
         "<svg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24'><path d='M200-200v-240h80v160h160v80H200Zm480-320v-160H520v-80h240v240h-80Z'/></svg>";
       this.isCollapsed = true;
     }
   }
 
-  // Expand the minimap to its original size
   private expand(): void {
     if (!this.container || !this.toggleButton) return;
+
     const opts = this.options;
+
     if (opts.toggleDisplay) {
       this.container.style.width = opts.width || "320px";
       this.container.style.height = opts.height || "180px";
-      this.container.style.resize = this.options.enableResize ? "both" : "none";
+      this.container!.style.resize = this.options.enableResize
+        ? "both"
+        : "none";
+      this.container.style.minHeight = "100px";
+      this.container.style.minWidth = "150px";
       this.toggleButton.innerHTML =
-        "<svg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24'><path d='M440-440v240h-80v-160H200v-80h240Zm160-320v160h160v80H520v-240h80Z'/></svg>";
+        "<svg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24' style='fillColor: inherit'><path d='M440-440v240h-80v-160H200v-80h240Zm160-320v160h160v80H520v-240h80Z'/></svg>";
       this.isCollapsed = false;
     }
   }
 
-  // Handle mouse movement to drag the tracking rectangle
   private mouseMove(e: MapMouseEvent<MapT>): void {
     if (!this.minimapCanvas || !this.minimap || !this.map) return;
 
@@ -393,21 +417,28 @@ export default class Minimap<MapT extends MapInstance>
       layers: ["trackingRectFill"],
     });
 
+    // Update cursor when interacting with tracking rectangle
     if (!(this.isCursorOverFeature && features.length > 0)) {
       this.isCursorOverFeature = features.length > 0;
       this.minimapCanvas.style.cursor = this.isCursorOverFeature ? "move" : "";
     }
 
     if (this.isDragging) {
+      // Update tracking rectangle position when dragging
       this.previousPoint = this.currentPoint;
       this.currentPoint = [e.lngLat.lng, e.lngLat.lat];
       const offset = [
         this.previousPoint[0] - this.currentPoint[0],
         this.previousPoint[1] - this.currentPoint[1],
       ];
+
       const newBounds = this.moveTrackingRect(offset);
+
+      // Option to move the main map with the minimap
       if (!this.options.disableMinimapMoveOnDrag) {
-        this.map.fitBounds(newBounds, { duration: 80 });
+        this.map.fitBounds(newBounds, {
+          duration: 80,
+        });
       }
     }
   }
@@ -415,6 +446,7 @@ export default class Minimap<MapT extends MapInstance>
   private mouseUp(): void {
     if (this.isDragging) {
       this.isDragging = false;
+
       if (this.trackingRect && this.map && this.minimap) {
         const trackingRectData = this.trackingRect._data;
         const bounds = trackingRectData.properties.bounds;
@@ -424,25 +456,48 @@ export default class Minimap<MapT extends MapInstance>
     }
   }
 
-  // Adjust the minimap's zoom level to match the main map
-  private zoomAdjust(): void {
-    if (this.minimap && this.map)
-      this.minimap.setZoom(this.map.getZoom() + this.options.zoomLevelOffset);
+  private moveTrackingRect(offset: number[]) {
+    if (!this.trackingRect) return;
+
+    const source = this.trackingRect;
+    const data = source._data;
+
+    if (!data) return;
+    const bounds = data.properties.bounds;
+
+    bounds._ne.lat -= offset[1];
+    bounds._ne.lng -= offset[0];
+    bounds._sw.lat -= offset[1];
+    bounds._sw.lng -= offset[0];
+
+    // Convert bounds to points for the tracking rectangle
+    this.convertBoundsToPoints(bounds);
+
+    // Restrict bounds within valid latitude/longitude
+    bounds._ne.lat = Math.min(bounds._ne.lat, 90);
+    bounds._ne.lng = Math.min(bounds._ne.lng, 180);
+    bounds._sw.lat = Math.max(bounds._sw.lat, -90);
+    bounds._sw.lng = Math.max(bounds._sw.lng, -180);
+
+    source.setData(data);
+
+    return bounds;
   }
 
-  // Sync the minimap's tracking rectangle with the main map's bounds
   private setTrackingRectBounds(): void {
     if (!this.map) return;
+
     const bounds = this.map.getBounds();
     const source = this.trackingRect;
+
     if (!source) return;
+
     const data = source._data;
     data.properties.bounds = bounds;
     this.convertBoundsToPoints(bounds);
     source.setData(data);
   }
 
-  // Helper function to convert map bounds to polygon coordinates
   convertBoundsToPoints(bounds: any): void {
     const ne = bounds._ne;
     const sw = bounds._sw;
@@ -460,44 +515,28 @@ export default class Minimap<MapT extends MapInstance>
     trc[0][4][1] = ne.lat;
   }
 
-  // Move the tracking rectangle on the minimap when dragging
-  private moveTrackingRect(offset: number[]) {
-    if (!this.trackingRect) return;
-    const source = this.trackingRect;
-    const data = source._data;
-    if (!data) return;
-    const bounds = data.properties.bounds;
-    bounds._ne.lat -= offset[1];
-    bounds._ne.lng -= offset[0];
-    bounds._sw.lat -= offset[1];
-    bounds._sw.lng -= offset[0];
-
-    // Restrict bounds to valid latitude/longitude ranges
-    bounds._ne.lat = Math.min(bounds._ne.lat, 90);
-    bounds._ne.lng = Math.min(bounds._ne.lng, 180);
-    bounds._sw.lat = Math.max(bounds._sw.lat, -90);
-    bounds._sw.lng = Math.max(bounds._sw.lng, -180);
-
-    source.setData(data);
-    return bounds;
-  }
-
-  // Update minimap on main map movement
   private update(): void {
     if (this.isDragging) return;
+
     this.zoomAdjust();
     this.setTrackingRectBounds();
   }
 
-  // Sync the minimap's center when the main map is moved
   private mapMoved(): void {
     if (this.minimap && this.map) this.minimap.setCenter(this.map.getCenter());
   }
 
-  // Create the minimap's container DOM element
+  private zoomAdjust(): void {
+    if (this.minimap && this.map) {
+      this.minimap.setZoom(this.map.getZoom() + this.options.zoomLevelOffset);
+    }
+  }
+
+  // Creates the container for the minimap and applies initial styles
   private createContainer(map: MapT): HTMLDivElement {
     const opts = this.options;
     const container = document.createElement("div");
+
     container.className = "mapgl-minimap maplibregl-ctrl mapboxgl-ctrl";
     if (opts.containerClass) container.classList.add(opts.containerClass);
     container.setAttribute(
@@ -510,6 +549,7 @@ export default class Minimap<MapT extends MapInstance>
     );
     container.style.transition = "height 0.6s, width 0.6s";
     container.addEventListener("contextmenu", this.preventDefault);
+
     map.getContainer().appendChild(container);
 
     if (opts.id && opts.id.length > 0) {
@@ -519,7 +559,7 @@ export default class Minimap<MapT extends MapInstance>
     return container;
   }
 
-  // Enable the toggle button to collapse/expand the minimap
+  // Enables the toggle button to show/hide the minimap
   private enableToggle(): void {
     if (!this.container) return;
     const opts = this.options;
@@ -537,7 +577,7 @@ export default class Minimap<MapT extends MapInstance>
     this.toggleButton.style.display = "block";
   }
 
-  // Create the toggle button DOM element
+  // Creates the toggle button element with SVG icon
   private createToggleButton(): HTMLAnchorElement {
     const opts = this.options;
     const button = document.createElement("a");
@@ -555,6 +595,7 @@ export default class Minimap<MapT extends MapInstance>
     return button;
   }
 
+  // Prevents default behavior for event
   private preventDefault(e: Event): void {
     e.preventDefault();
   }
