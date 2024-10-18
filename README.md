@@ -2,6 +2,8 @@
 
 This package provides a minimap control for Mapbox GL or Maplibre GL maps. The minimap displays a smaller version of the main map, highlighting a portion of the view with a tracking rectangle. The minimap can be customized, moved, and resized based on your needs.
 
+![Description of the image](https://3w-creation.net/demo-minimap.png)
+
 ## Installation
 
 ```bash
