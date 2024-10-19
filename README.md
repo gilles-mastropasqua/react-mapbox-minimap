@@ -7,7 +7,7 @@ This package provides a minimap control for Mapbox GL or Maplibre GL maps. The m
 ## Installation
 
 ```bash
-npm install mapbox-minimap-control
+npm i react-mapbox-minimap
 ```
 ## Usage
 
