@@ -1,6 +1,6 @@
 {
   "name": "react-mapbox-minimap",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,17 +9,29 @@
   },
   "keywords": ["map", "mapbox-gl", "reactjs", "mapbox", "minimap", "maplibre"],
   "author": "Gilles Mastropasqua",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gilles-mastropasqua/react-mapbox-minimap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gilles-mastropasqua/react-mapbox-minimap/issues"
+  },
+  "homepage": "https://github.com/gilles-mastropasqua/react-mapbox-minimap#readme",
   "devDependencies": {
     "@mapbox/point-geometry": "^0.1.0",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
-    "maplibre-gl": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-style-spec": "^19.3.3",
-    "@types/mapbox-gl": "^2.7.19"
+    "@types/mapbox-gl": "^2.7.19",
+    "maplibre-gl": "^3.6.2"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "mapbox-gl": "^2.0.0"
   }
 }
