@@ -54,7 +54,7 @@ Here are the available options you can use to customize the minimap:
 - `keyboard` (boolean): Enables or disables keyboard controls in the minimap. Default is `false`.
 - `doubleClickZoom` (boolean): Enables or disables zooming via double-click in the minimap. Default is `false`.
 - `touchZoomRotate` (boolean): Enables or disables touch gestures in the minimap. Default is `false`.
-- `disableMinimapMoveOnDrag` (boolean): If `true`, dragging the tracking rectangle does not update the main map's bounds. Default is `false`.
+- `disableMinimapMoveOnDrag` (boolean): If `true`, dragging the tracking rectangle from the minimap does not update the main minimap's bounds until the mouse is released. Default is `false`.
 - `enableResize` (boolean): Allows the user to resize the minimap. Default is `false`.
 - `enableMove` (boolean): Allows the user to move the minimap by dragging it. Default is `false`.
 
