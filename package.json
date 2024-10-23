@@ -1,6 +1,6 @@
 {
   "name": "react-mapbox-minimap",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,6 +32,6 @@
   },
   "peerDependencies": {
     "react": ">=17.0.0",
-    "mapbox-gl": "^2.0.0"
+    "mapbox-gl": "^3.7.0"
   }
 }

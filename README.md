@@ -14,7 +14,7 @@ npm i react-mapbox-minimap
 In your Mapbox or Maplibre GL project, you can add the minimap control as follows:
 
 ```typescript
-import Minimap from 'mapbox-minimap-control';
+import Minimap from 'react-mapbox-minimap';
 
 // Assuming 'map' is your main Mapbox GL map instance
 const minimap = new Minimap(mapboxgl, {
