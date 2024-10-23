@@ -1,0 +1,8 @@
+src/
+.idea/
+node_modules/
+dist/
+*.log
+*.tsbuildinfo
+tsconfig.json
+.eslintrc.*
