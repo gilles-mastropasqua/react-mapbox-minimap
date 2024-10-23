@@ -4,6 +4,12 @@ This package provides a minimap control for Mapbox GL or Maplibre GL maps. The m
 
 ![Description of the image](https://3w-creation.net/demo-minimap.png)
 
+## Live Demo
+
+You can check out the live version of this package here:
+
+[Next.js Minimal Mapbox with minimap - Live Demo](https://nextjs-minimal-mapbox-with-minimap.vercel.app)
+
 ## Installation
 
 ```bash

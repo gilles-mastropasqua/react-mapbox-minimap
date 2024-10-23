@@ -1,6 +1,6 @@
 {
   "name": "react-mapbox-minimap",
-  "version": "1.0.5",
+  "version": "1.0.15",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/gilles-mastropasqua/react-mapbox-minimap/issues"
   },
-  "homepage": "https://github.com/gilles-mastropasqua/react-mapbox-minimap#readme",
+  "homepage": "https://nextjs-minimal-mapbox-with-minimap.vercel.app",
   "devDependencies": {
     "@mapbox/point-geometry": "^0.1.0",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
