@@ -95,4 +95,4 @@ map.on("load", function () {
 
 ## Credits
 
-This project is heavily inspired by the original work of **Laura Mosher** ([@lauramosher](https://github.com/lauramosher)). The core functionality of this minimap control is based on their excellent work, to which I have added a few additional features and customization options, such as the ability to resize and move the minimap.
+This project is heavily inspired by the original work of **Laura Mosher** ([@lauramosher](https://github.com/lauramosher)). The core functionality of this minimap control is based on this excellent work, to which I have added a few additional features and customization options, such as the ability to resize and move the minimap.
